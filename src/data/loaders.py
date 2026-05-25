@@ -74,9 +74,9 @@ def load_mnist(return_numpy: bool = False, train: bool = True) -> Any:
     transform = transforms.Compose([transforms.ToTensor()])
     if return_numpy:
         dataset = datasets.MNIST(data_root, train=train, download=True, transform=transform)
-        x = np.stack([np.array(img).astype(float) for img, _ in dataset])
+        x = np.stack([np.array(img).astype(np.float32) for img, _ in dataset])
         y = np.array([label for _, label in dataset], dtype=int)
-        x = x.reshape(len(x), -1) / 255.0
+        x = x.reshape(len(x), -1)
         return x, y
     return datasets.MNIST(data_root, train=train, download=True, transform=transform)
 

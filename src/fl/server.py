@@ -126,6 +126,7 @@ def run_federated_experiment(
     dp_target_delta: float = 1e-5,
     seed: int = 42,
 ):
+    print(f"Starting federated experiment for {dataset_name}: {num_clients} clients, {num_rounds} rounds, DP={use_dp}")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     num_classes = 10 if dataset_name == "mnist" else len(np.unique(y_train))
     model = get_model_for_dataset(dataset_name, input_dim=x_train.shape[1] if dataset_name != "mnist" else None, num_classes=num_classes)
@@ -156,9 +157,11 @@ def run_federated_experiment(
     rounds = 0
     history = {"accuracy": [], "loss": []}
 
-    for _ in range(num_rounds):
+    for round_idx in range(1, num_rounds + 1):
+        print(f"  Federated round {round_idx}/{num_rounds} for {dataset_name}")
         round_results: List[Tuple[List[np.ndarray], int]] = []
-        for client in clients:
+        for client_idx, client in enumerate(clients):
+            print(f"    Client {client_idx + 1}/{len(clients)} training...")
             downloaded_bytes += _parameters_size(parameters)
             client_params, num_examples, _ = client.fit(parameters, config={})
             uploaded_bytes += _parameters_size(client_params)
@@ -170,6 +173,7 @@ def run_federated_experiment(
         loss, metrics = evaluate_fn(parameters)
         history["loss"].append(loss)
         history["accuracy"].append(metrics.get("accuracy", 0.0))
+        print(f"    Round {round_idx} evaluation: accuracy={metrics.get('accuracy', 0.0):.4f}, loss={loss:.4f}")
 
     return {
         "accuracy": history["accuracy"][-1] if len(history["accuracy"]) > 0 else 0.0,

@@ -57,8 +57,8 @@ class ExperimentRunner:
         if dataset_name == "mnist":
             x_train, y_train = load_mnist(return_numpy=True, train=True)
             x_test, y_test = load_mnist(return_numpy=True, train=False)
-            x = np.concatenate([x_train, x_test], axis=0)
-            y = np.concatenate([y_train, y_test], axis=0)
+            x = np.concatenate([x_train[:5000], x_test[:1000]], axis=0)
+            y = np.concatenate([y_train[:5000], y_test[:1000]], axis=0)
             return x, y
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
@@ -68,11 +68,13 @@ class ExperimentRunner:
             x_train = x_train.reshape(-1, 28, 28)
             x_test = x_test.reshape(-1, 28, 28)
 
+        print(f"  Running centralized baseline for {dataset_name}")
         central_results = self._run_centralized(dataset_name, x_train, y_train, x_test, y_test)
         outputs.append({**central_results, "variant": "centralized", "dataset": dataset_name})
 
         for label in ["iid_partition.pkl", "dirichlet_partition.pkl", "label_skew_partition.pkl"]:
             variant = self._variant_label(label)
+            print(f"  Running federated variant {variant} for {dataset_name}")
             partitions_path = os.path.join(self.data_root, dataset_name, label)
             federated_results = run_federated_experiment(
                 dataset_name=dataset_name,
